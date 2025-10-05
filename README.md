@@ -5,7 +5,7 @@ Este projeto implementa um rate limiter configurável que pode ser usado como mi
 - **Endereço IP**: Limita requisições vindas do mesmo IP
 - **Token de Acesso**: Permite limites customizados por token (via header `API_KEY`)
 
-O rate limiter utiliza o **Strategy Pattern** para o storage, permitindo fácil substituição do backend (Redis, Memory, etc.).
+O rate limiter utiliza **Redis** como backend de armazenamento e implementa o **Strategy Pattern**, permitindo fácil substituição por outros sistemas de persistência se necessário.
 
 ### Características Principais
 
@@ -25,7 +25,7 @@ O rate limiter utiliza o **Strategy Pattern** para o storage, permitindo fácil 
 ├── cmd/server/              # Aplicação principal
 ├── internal/
 │   ├── config/              # Gerenciamento de configurações
-│   ├── storage/             # Interface e implementações de storage
+│   ├── storage/             # Interface e implementação Redis
 │   ├── limiter/             # Lógica de rate limiting
 │   └── middleware/          # Middleware HTTP
 ├── test-*.sh                # Scripts de teste de carga
@@ -78,6 +78,7 @@ Edite o arquivo `.env` para ajustar os limites:
 # Configuração do Redis
 REDIS_HOST=redis
 REDIS_PORT=6379
+REDIS_PASSWORD=xxx
 REDIS_DB=0
 
 # Limites de Rate Limiting
@@ -89,6 +90,8 @@ BLOCK_DURATION_SECONDS=300      # Tempo de bloqueio (5 minutos)
 TOKEN_abc123=100
 TOKEN_xyz789=50
 ```
+
+**Nota:** O Docker Compose carrega automaticamente as variáveis do arquivo `.env`. As configurações para o REDIS são sobrescritos quando rodando em containers.
 
 Após alterar, reinicie a aplicação:
 
