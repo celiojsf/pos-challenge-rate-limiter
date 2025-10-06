@@ -85,16 +85,6 @@ docker-compose logs -f app
 
 A aplicação estará disponível em **http://localhost:8080**
 
-### Parar a Aplicação
-
-```bash
-# Parar containers
-docker-compose down
-
-# Parar e limpar volumes (limpa dados do Redis)
-docker-compose down -v
-```
-
 ## 🧪 Executar Testes
 
 ### Script de Teste Completo
@@ -137,6 +127,16 @@ chmod +x test-scenarios.sh
 - ✅ Logs coloridos e detalhados
 - ✅ Contadores de sucesso/falha por cenário
 - ✅ Resumo final com todas as configurações testadas
+
+### Parar a Aplicação
+
+```bash
+# Parar containers
+docker-compose down
+
+# Parar e limpar volumes (limpa dados do Redis)
+docker-compose down -v
+```
 
 ## ⚙️ Configuração
 
