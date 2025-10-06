@@ -36,7 +36,7 @@ func (r *RedisStorage) Increment(ctx context.Context, key string, expiration tim
 	pipe := r.client.Pipeline()
 
 	incr := pipe.Incr(ctx, key)
-	pipe.Expire(ctx, key, expiration)
+	pipe.ExpireNX(ctx, key, expiration)
 
 	_, err := pipe.Exec(ctx)
 	if err != nil {

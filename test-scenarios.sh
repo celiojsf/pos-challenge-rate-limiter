@@ -26,7 +26,7 @@ clear_redis() {
         echo -e "${RED}✗ Failed to clear Redis cache${NC}"
     fi
     echo "waiting 5 seconds..."
-    sleep 5
+    sleep 2
     echo ""
 }
 
@@ -101,7 +101,7 @@ for i in $(seq 1 $((RATE_LIMIT_IP + 3))); do
             ((fail_count++))
         fi
     fi
-    sleep 0.1
+    sleep 0.01
 done
 
 echo ""
@@ -138,7 +138,7 @@ for i in $(seq 1 $((RATE_LIMIT_TOKEN_DEFAULT + 3))); do
             ((fail_count++))
         fi
     fi
-    sleep 0.1
+    sleep 0.01
 done
 
 echo ""
@@ -175,7 +175,7 @@ for ip in "${ips[@]}"; do
         else
             print_result $i $status "429"
         fi
-        sleep 0.05
+        sleep 0.01
     done
     
     echo -e "   ✓ IP $ip: $success_count/$RATE_LIMIT_IP successful requests"
@@ -211,7 +211,7 @@ for i in $(seq 1 $((TOKEN_ABC123_LIMIT + 3))); do
             ((fail_count++))
         fi
     fi
-    sleep 0.1
+    sleep 0.01
 done
 
 echo ""
@@ -248,7 +248,7 @@ for i in $(seq 1 $((TOKEN_XYZ789_LIMIT + 3))); do
             ((fail_count++))
         fi
     fi
-    sleep 0.05
+    sleep 0.01
 done
 
 echo ""
@@ -275,7 +275,7 @@ for i in $(seq 1 3); do
     if [ "$status" == "403" ]; then
         ((forbidden_count++))
     fi
-    sleep 0.1
+    sleep 0.01
 done
 
 echo ""
