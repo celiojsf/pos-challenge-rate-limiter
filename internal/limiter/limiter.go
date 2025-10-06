@@ -44,6 +44,12 @@ func (rl *RateLimiter) Allow(ctx context.Context, ip string, token string) (bool
 	return rl.checkIP(ctx, ip)
 }
 
+// IsTokenRegistered checks if a token is registered in the configuration
+func (rl *RateLimiter) IsTokenRegistered(token string) bool {
+	_, exists := rl.tokenLimits[token]
+	return exists
+}
+
 func (rl *RateLimiter) checkIP(ctx context.Context, ip string) (bool, error) {
 	key := fmt.Sprintf("ratelimit:ip:%s", ip)
 
@@ -75,6 +81,13 @@ func (rl *RateLimiter) checkIP(ctx context.Context, ip string) (bool, error) {
 }
 
 func (rl *RateLimiter) checkToken(ctx context.Context, token string) (bool, error) {
+	// Check if token exists in the configured tokens
+	limit, exists := rl.tokenLimits[token]
+	if !exists {
+		// Token not registered, deny access
+		return false, nil
+	}
+
 	key := fmt.Sprintf("ratelimit:token:%s", token)
 
 	// Check if token is blocked
@@ -84,12 +97,6 @@ func (rl *RateLimiter) checkToken(ctx context.Context, token string) (bool, erro
 	}
 	if blocked {
 		return false, nil
-	}
-
-	// Get token-specific limit or use default
-	limit := rl.tokenLimit
-	if customLimit, exists := rl.tokenLimits[token]; exists {
-		limit = customLimit
 	}
 
 	// Increment counter

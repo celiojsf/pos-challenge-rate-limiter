@@ -34,8 +34,14 @@ func (m *RateLimiterMiddleware) Handle(next http.Handler) http.Handler {
 
 		if !allowed {
 			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusTooManyRequests)
-			w.Write([]byte(`{"error": "you have reached the maximum number of requests or actions allowed within a certain time frame"}`))
+			// If token was provided but is invalid or not registered
+			if token != "" && !m.limiter.IsTokenRegistered(token) {
+				w.WriteHeader(http.StatusForbidden)
+				w.Write([]byte(`{"error": "invalid API key"}`))
+			} else {
+				w.WriteHeader(http.StatusTooManyRequests)
+				w.Write([]byte(`{"error": "you have reached the maximum number of requests or actions allowed within a certain time frame"}`))
+			}
 			return
 		}
 

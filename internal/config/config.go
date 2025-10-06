@@ -67,9 +67,14 @@ func LoadConfig() (*Config, error) {
 			parts := strings.SplitN(env, "=", 2)
 			if len(parts) == 2 {
 				token := strings.TrimPrefix(parts[0], "TOKEN_")
-				limit, err := strconv.Atoi(parts[1])
-				if err == nil {
-					config.TokenLimits[token] = limit
+				// If value is empty, use the default RATE_LIMIT_TOKEN
+				if parts[1] == "" {
+					config.TokenLimits[token] = rateLimitToken
+				} else {
+					limit, err := strconv.Atoi(parts[1])
+					if err == nil {
+						config.TokenLimits[token] = limit
+					}
 				}
 			}
 		}
