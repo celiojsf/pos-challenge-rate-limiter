@@ -13,7 +13,7 @@ RATE_LIMIT_TOKEN_DEFAULT=15
 TOKEN_ABC123_LIMIT=10
 TOKEN_XYZ789_LIMIT=20
 
-API_URL="http://localhost:8080"
+API_URL="http://localhost:8080/api/test"
 REDIS_CONTAINER="rate-limiter-redis"
 
 # Function to clear Redis cache
@@ -44,7 +44,7 @@ make_request() {
         headers="$headers -H \"X-Forwarded-For: $ip\""
     fi
     
-    eval curl -s -o /dev/null -w "%{http_code}" $headers "$API_URL/"
+    eval curl -s -o /dev/null -w "%{http_code}" $headers "$API_URL"
 }
 
 # Function to print scenario header
