@@ -8,13 +8,6 @@ import (
 	"github.com/celiojsf/pos-challenge-rate-limiter/internal/storage"
 )
 
-type RateLimiter struct {
-	storage       storage.Storage
-	ipLimit       int
-	blockDuration time.Duration
-	tokenLimits   map[string]int
-}
-
 type Config struct {
 	Storage       storage.Storage
 	IPLimit       int
@@ -22,12 +15,13 @@ type Config struct {
 	TokenLimits   map[string]int
 }
 
+type RateLimiter struct {
+	config Config
+}
+
 func NewRateLimiter(cfg Config) *RateLimiter {
 	return &RateLimiter{
-		storage:       cfg.Storage,
-		ipLimit:       cfg.IPLimit,
-		blockDuration: cfg.BlockDuration,
-		tokenLimits:   cfg.TokenLimits,
+		config: cfg,
 	}
 }
 
@@ -43,7 +37,7 @@ func (rl *RateLimiter) Allow(ctx context.Context, ip string, token string) (bool
 
 // IsTokenRegistered checks if a token is registered in the configuration
 func (rl *RateLimiter) IsTokenRegistered(token string) bool {
-	_, exists := rl.tokenLimits[token]
+	_, exists := rl.config.TokenLimits[token]
 	return exists
 }
 
@@ -51,7 +45,7 @@ func (rl *RateLimiter) checkIP(ctx context.Context, ip string) (bool, error) {
 	key := fmt.Sprintf("ratelimit:ip:%s", ip)
 
 	// Check if IP is blocked
-	blocked, err := rl.storage.IsBlocked(ctx, key)
+	blocked, err := rl.config.Storage.IsBlocked(ctx, key)
 	if err != nil {
 		return false, fmt.Errorf("failed to check if IP is blocked: %w", err)
 	}
@@ -60,15 +54,15 @@ func (rl *RateLimiter) checkIP(ctx context.Context, ip string) (bool, error) {
 	}
 
 	// Increment counter
-	count, err := rl.storage.Increment(ctx, key, 1*time.Second)
+	count, err := rl.config.Storage.Increment(ctx, key, 1*time.Second)
 	if err != nil {
 		return false, fmt.Errorf("failed to increment IP counter: %w", err)
 	}
 
 	// Check if limit exceeded
-	if count > int64(rl.ipLimit) {
+	if count > int64(rl.config.IPLimit) {
 		// Block the IP
-		if err := rl.storage.SetBlock(ctx, key, rl.blockDuration); err != nil {
+		if err := rl.config.Storage.SetBlock(ctx, key, rl.config.BlockDuration); err != nil {
 			return false, fmt.Errorf("failed to block IP: %w", err)
 		}
 		return false, nil
@@ -79,7 +73,7 @@ func (rl *RateLimiter) checkIP(ctx context.Context, ip string) (bool, error) {
 
 func (rl *RateLimiter) checkToken(ctx context.Context, token string) (bool, error) {
 	// Check if token exists in the configured tokens
-	limit, exists := rl.tokenLimits[token]
+	limit, exists := rl.config.TokenLimits[token]
 	if !exists {
 		// Token not registered, deny access
 		return false, nil
@@ -88,7 +82,7 @@ func (rl *RateLimiter) checkToken(ctx context.Context, token string) (bool, erro
 	key := fmt.Sprintf("ratelimit:token:%s", token)
 
 	// Check if token is blocked
-	blocked, err := rl.storage.IsBlocked(ctx, key)
+	blocked, err := rl.config.Storage.IsBlocked(ctx, key)
 	if err != nil {
 		return false, fmt.Errorf("failed to check if token is blocked: %w", err)
 	}
@@ -97,7 +91,7 @@ func (rl *RateLimiter) checkToken(ctx context.Context, token string) (bool, erro
 	}
 
 	// Increment counter
-	count, err := rl.storage.Increment(ctx, key, 1*time.Second)
+	count, err := rl.config.Storage.Increment(ctx, key, 1*time.Second)
 	if err != nil {
 		return false, fmt.Errorf("failed to increment token counter: %w", err)
 	}
@@ -105,7 +99,7 @@ func (rl *RateLimiter) checkToken(ctx context.Context, token string) (bool, erro
 	// Check if limit exceeded
 	if count > int64(limit) {
 		// Block the token
-		if err := rl.storage.SetBlock(ctx, key, rl.blockDuration); err != nil {
+		if err := rl.config.Storage.SetBlock(ctx, key, rl.config.BlockDuration); err != nil {
 			return false, fmt.Errorf("failed to block token: %w", err)
 		}
 		return false, nil
