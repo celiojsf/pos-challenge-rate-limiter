@@ -25,7 +25,8 @@ clear_redis() {
     else
         echo -e "${RED}✗ Failed to clear Redis cache${NC}"
     fi
-    sleep 20
+    echo "waiting 5 seconds..."
+    sleep 5
     echo ""
 }
 

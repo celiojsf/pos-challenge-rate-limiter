@@ -95,53 +95,7 @@ docker-compose down
 docker-compose down -v
 ```
 
-## ⚙️ Configuração
-
-Edite o arquivo `.env` para ajustar os limites:
-
-```env
-# Rate Limiter Configuration
-
-# Redis Configuration
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_PASSWORD=
-REDIS_DB=0
-
-# Rate Limiter Settings
-RATE_LIMIT_IP=5                     # Requisições por segundo por IP
-RATE_LIMIT_TOKEN_DEFAULT=15         # Limite padrão para tokens sem valor definido
-BLOCK_DURATION_SECONDS=300          # Tempo de bloqueio em segundos (5 minutos)
-
-# Token Configuration (example tokens with custom limits)
-# Format: TOKEN_<TOKEN_VALUE>=<LIMIT>
-# If limit is empty, it will use RATE_LIMIT_TOKEN_DEFAULT as default
-TOKEN_abc123=10                      # Token com limite customizado de 10 req/s
-TOKEN_xyz789=20                      # Token com limite customizado de 20 req/s
-TOKEN_teste=                         # Token sem valor, usará RATE_LIMIT_TOKEN_DEFAULT (15 req/s)
-```
-
-### Como Funciona a Configuração de Tokens
-
-1. **Tokens com Limite Customizado**: Defina `TOKEN_<nome>=<valor>` para criar um token com limite específico
-   - Exemplo: `TOKEN_abc123=10` → Token "abc123" terá limite de 10 requisições/segundo
-
-2. **Tokens com Limite Padrão**: Defina `TOKEN_<nome>=` (vazio) para usar o limite padrão
-   - Exemplo: `TOKEN_teste=` → Token "teste" usará o valor de `RATE_LIMIT_TOKEN_DEFAULT`
-
-3. **Tokens Não Registrados**: Qualquer token que não esteja definido no `.env` será **rejeitado** com HTTP 403 (Forbidden)
-
-**Nota:** O Docker Compose carrega automaticamente as variáveis do arquivo `.env`. As configurações para o REDIS são sobrescritos quando rodando em containers.
-
-Após alterar as configurações, é necessário recriar os containers:
-
-```bash
-# Parar e recriar os containers com as novas configurações
-docker-compose down
-docker-compose up -d
-```
-
-## 🧪 Testes
+## 🧪 Executar Testes
 
 ### Script de Teste Completo
 
@@ -183,6 +137,28 @@ chmod +x test-scenarios.sh
 - ✅ Logs coloridos e detalhados
 - ✅ Contadores de sucesso/falha por cenário
 - ✅ Resumo final com todas as configurações testadas
+
+## ⚙️ Configuração
+
+### Como Funciona a Configuração de Tokens
+
+1. **Tokens com Limite Customizado**: Defina `TOKEN_<nome>=<valor>` para criar um token com limite específico
+   - Exemplo: `TOKEN_abc123=10` → Token "abc123" terá limite de 10 requisições/segundo
+
+2. **Tokens com Limite Padrão**: Defina `TOKEN_<nome>=` (vazio) para usar o limite padrão
+   - Exemplo: `TOKEN_teste=` → Token "teste" usará o valor de `RATE_LIMIT_TOKEN_DEFAULT`
+
+3. **Tokens Não Registrados**: Qualquer token que não esteja definido no `.env` será **rejeitado** com HTTP 403 (Forbidden)
+
+**Nota:** O Docker Compose carrega automaticamente as variáveis do arquivo `.env`. As configurações para o REDIS são sobrescritos quando rodando em containers.
+
+Após alterar as configurações, é necessário recriar os containers:
+
+```bash
+# Parar e recriar os containers com as novas configurações
+docker-compose down
+docker-compose up -d
+```
 
 ## 📡 Endpoints da API
 
@@ -247,9 +223,8 @@ Respostas:
 
 ### Prioridades
 
-1. **Token customizado** (ex: `TOKEN_abc123=100`)
-2. **Token padrão** (`RATE_LIMIT_TOKEN=100`)
-3. **IP** (`RATE_LIMIT_IP=10`)
+1. **Token customizado com valor default ou próprio de limite** (ex: `TOKEN_abc123=100`)
+2. **IP** (`RATE_LIMIT_IP=10`)
 
 **Importante:** Token sempre sobrepõe IP!
 
