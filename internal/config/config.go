@@ -10,11 +10,10 @@ import (
 )
 
 type Config struct {
-	Redis          RedisConfig
-	RateLimitIP    int
-	RateLimitToken int
-	BlockDuration  int
-	TokenLimits    map[string]int
+	Redis         RedisConfig
+	RateLimitIP   int
+	BlockDuration int
+	TokenLimits   map[string]int
 }
 
 type RedisConfig struct {
@@ -38,9 +37,9 @@ func LoadConfig() (*Config, error) {
 		return nil, fmt.Errorf("invalid RATE_LIMIT_IP: %w", err)
 	}
 
-	rateLimitToken, err := strconv.Atoi(getEnv("RATE_LIMIT_TOKEN", "100"))
+	rateLimitTokenDefault, err := strconv.Atoi(getEnv("RATE_LIMIT_TOKEN_DEFAULT", "100"))
 	if err != nil {
-		return nil, fmt.Errorf("invalid RATE_LIMIT_TOKEN: %w", err)
+		return nil, fmt.Errorf("invalid RATE_LIMIT_TOKEN_DEFAULT: %w", err)
 	}
 
 	blockDuration, err := strconv.Atoi(getEnv("BLOCK_DURATION_SECONDS", "300"))
@@ -55,10 +54,9 @@ func LoadConfig() (*Config, error) {
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       redisDB,
 		},
-		RateLimitIP:    rateLimitIP,
-		RateLimitToken: rateLimitToken,
-		BlockDuration:  blockDuration,
-		TokenLimits:    make(map[string]int),
+		RateLimitIP:   rateLimitIP,
+		BlockDuration: blockDuration,
+		TokenLimits:   make(map[string]int),
 	}
 
 	// Load custom token limits
@@ -67,9 +65,9 @@ func LoadConfig() (*Config, error) {
 			parts := strings.SplitN(env, "=", 2)
 			if len(parts) == 2 {
 				token := strings.TrimPrefix(parts[0], "TOKEN_")
-				// If value is empty, use the default RATE_LIMIT_TOKEN
+				// If value is empty, use the default RATE_LIMIT_TOKEN_DEFAULT
 				if parts[1] == "" {
-					config.TokenLimits[token] = rateLimitToken
+					config.TokenLimits[token] = rateLimitTokenDefault
 				} else {
 					limit, err := strconv.Atoi(parts[1])
 					if err == nil {

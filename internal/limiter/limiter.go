@@ -11,7 +11,6 @@ import (
 type RateLimiter struct {
 	storage       storage.Storage
 	ipLimit       int
-	tokenLimit    int
 	blockDuration time.Duration
 	tokenLimits   map[string]int
 }
@@ -19,7 +18,6 @@ type RateLimiter struct {
 type Config struct {
 	Storage       storage.Storage
 	IPLimit       int
-	TokenLimit    int
 	BlockDuration time.Duration
 	TokenLimits   map[string]int
 }
@@ -28,7 +26,6 @@ func NewRateLimiter(cfg Config) *RateLimiter {
 	return &RateLimiter{
 		storage:       cfg.Storage,
 		ipLimit:       cfg.IPLimit,
-		tokenLimit:    cfg.TokenLimit,
 		blockDuration: cfg.BlockDuration,
 		tokenLimits:   cfg.TokenLimits,
 	}

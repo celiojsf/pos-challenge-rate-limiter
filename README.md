@@ -12,6 +12,8 @@ O rate limiter utiliza **Redis** como backend de armazenamento e implementa o **
 ✅ Limitação por IP e Token  
 ✅ Tokens customizados com limites diferentes  
 ✅ Token sobrepõe limitação por IP  
+✅ Tokens com limite padrão (usando `RATE_LIMIT_TOKEN_DEFAULT`)  
+✅ Validação de tokens registrados (rejeita tokens não cadastrados)  
 ✅ Bloqueio temporário configurável  
 ✅ Redis para persistência distribuída  
 ✅ Strategy Pattern para fácil troca de backend  
@@ -28,7 +30,7 @@ O rate limiter utiliza **Redis** como backend de armazenamento e implementa o **
 │   ├── storage/             # Interface e implementação Redis
 │   ├── limiter/             # Lógica de rate limiting
 │   └── middleware/          # Middleware HTTP
-├── test-*.sh                # Scripts de teste de carga
+├── test-scenarios.sh        # Script de teste completo
 ├── docker-compose.yml       # Orquestração Docker
 ├── Dockerfile
 └── .env                     # Configurações
@@ -59,14 +61,16 @@ REDIS_PASSWORD=
 REDIS_DB=0
 
 # Rate Limiter Settings
-RATE_LIMIT_IP=10
-RATE_LIMIT_TOKEN=100
+RATE_LIMIT_IP=5
+RATE_LIMIT_TOKEN_DEFAULT=15
 BLOCK_DURATION_SECONDS=300
 
 # Token Configuration (example tokens with custom limits)
 # Format: TOKEN_<TOKEN_VALUE>=<LIMIT>
-TOKEN_abc123=100
-TOKEN_xyz789=50
+# If limit is empty, it will use RATE_LIMIT_TOKEN_DEFAULT as default
+TOKEN_abc123=10
+TOKEN_xyz789=20
+TOKEN_teste=
 EOF
 
 # 3. Inicie os containers (Redis + Aplicação)
@@ -105,15 +109,27 @@ REDIS_PASSWORD=
 REDIS_DB=0
 
 # Rate Limiter Settings
-RATE_LIMIT_IP=10                # Requisições por segundo por IP
-RATE_LIMIT_TOKEN=100            # Requisições por segundo por token (padrão)
-BLOCK_DURATION_SECONDS=300      # Tempo de bloqueio (5 minutos)
+RATE_LIMIT_IP=5                     # Requisições por segundo por IP
+RATE_LIMIT_TOKEN_DEFAULT=15         # Limite padrão para tokens sem valor definido
+BLOCK_DURATION_SECONDS=300          # Tempo de bloqueio em segundos (5 minutos)
 
 # Token Configuration (example tokens with custom limits)
 # Format: TOKEN_<TOKEN_VALUE>=<LIMIT>
-TOKEN_abc123=100
-TOKEN_xyz789=50
+# If limit is empty, it will use RATE_LIMIT_TOKEN_DEFAULT as default
+TOKEN_abc123=10                      # Token com limite customizado de 10 req/s
+TOKEN_xyz789=20                      # Token com limite customizado de 20 req/s
+TOKEN_teste=                         # Token sem valor, usará RATE_LIMIT_TOKEN_DEFAULT (15 req/s)
 ```
+
+### Como Funciona a Configuração de Tokens
+
+1. **Tokens com Limite Customizado**: Defina `TOKEN_<nome>=<valor>` para criar um token com limite específico
+   - Exemplo: `TOKEN_abc123=10` → Token "abc123" terá limite de 10 requisições/segundo
+
+2. **Tokens com Limite Padrão**: Defina `TOKEN_<nome>=` (vazio) para usar o limite padrão
+   - Exemplo: `TOKEN_teste=` → Token "teste" usará o valor de `RATE_LIMIT_TOKEN_DEFAULT`
+
+3. **Tokens Não Registrados**: Qualquer token que não esteja definido no `.env` será **rejeitado** com HTTP 403 (Forbidden)
 
 **Nota:** O Docker Compose carrega automaticamente as variáveis do arquivo `.env`. As configurações para o REDIS são sobrescritos quando rodando em containers.
 
@@ -127,52 +143,46 @@ docker-compose up -d
 
 ## 🧪 Testes
 
-### Testes de Carga (Scripts Shell)
+### Script de Teste Completo
 
-O projeto inclui 3 scripts de teste:
+O projeto inclui um script abrangente que testa todos os cenários do rate limiter:
 
-#### 1. Teste Completo de Rate Limiting
 ```bash
-chmod +x test-rate-limiter.sh
-./test-rate-limiter.sh
+chmod +x test-scenarios.sh
+./test-scenarios.sh
 ```
 
-**O que testa:**
-- Limitação por IP (10 req/s)
-- Limitação por Token (100 req/s)
-- Tokens customizados
-- Bloqueio após exceder limite
+**Cenários Testados:**
 
-**Resultado esperado:**
-- ✓ Primeiras requisições são aceitas
-- ✗ Requisições após o limite são bloqueadas
+1. **Limitação por IP (sem token)**
+   - Valida que requisições são limitadas por IP
+   - Testa bloqueio após exceder o limite configurado
 
-#### 2. Teste com Múltiplos IPs
-```bash
-chmod +x test-multiple-ips.sh
-./test-multiple-ips.sh
-```
+2. **Token com Limite Padrão**
+   - Testa tokens configurados sem valor (`TOKEN_teste=`)
+   - Valida que usam `RATE_LIMIT_TOKEN_DEFAULT`
 
-**O que testa:**
-- Isolamento entre diferentes IPs
-- Cada IP tem seu próprio contador
+3. **Múltiplos IPs (Isolamento)**
+   - Verifica que diferentes IPs têm contadores independentes
+   - Cada IP pode fazer até o limite sem afetar outros
 
-**Resultado esperado:**
-- Cada IP consegue fazer até 10 requisições
-- IPs diferentes não interferem entre si
+4. **Token com Limite Customizado (abc123)**
+   - Testa token com limite específico definido
+   - Valida bloqueio após exceder o limite customizado
 
-#### 3. Teste de Stress (Concorrência)
-```bash
-chmod +x test-stress.sh
-./test-stress.sh
-```
+5. **Token com Outro Limite Customizado (xyz789)**
+   - Testa outro token com limite diferente
+   - Confirma que cada token respeita seu próprio limite
 
-**O que testa:**
-- Múltiplas requisições simultâneas
-- Comportamento sob carga
+6. **Token Inválido/Não Registrado**
+   - Valida rejeição de tokens não cadastrados
+   - Espera HTTP 403 (Forbidden) para tokens inválidos
 
-**Resultado esperado:**
-- Sistema mantém controle correto mesmo com requisições concorrentes
+**Recursos do Script:**
+- ✅ Limpa cache do Redis entre cada cenário
+- ✅ Logs coloridos e detalhados
+- ✅ Contadores de sucesso/falha por cenário
+- ✅ Resumo final com todas as configurações testadas
 
 ## 📡 Endpoints da API
 

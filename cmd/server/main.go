@@ -39,7 +39,6 @@ func main() {
 	rateLimiter := limiter.NewRateLimiter(limiter.Config{
 		Storage:       store,
 		IPLimit:       cfg.RateLimitIP,
-		TokenLimit:    cfg.RateLimitToken,
 		BlockDuration: time.Duration(cfg.BlockDuration) * time.Second,
 		TokenLimits:   cfg.TokenLimits,
 	})
@@ -88,9 +87,8 @@ func main() {
 		log.Printf("Starting server on port 8080...")
 		log.Printf("Rate Limiter Configuration:")
 		log.Printf("  - IP Limit: %d requests/second", cfg.RateLimitIP)
-		log.Printf("  - Token Limit: %d requests/second", cfg.RateLimitToken)
 		log.Printf("  - Block Duration: %d seconds", cfg.BlockDuration)
-		log.Printf("  - Custom Token Limits: %v", cfg.TokenLimits)
+		log.Printf("  - Registered Tokens with Limits: %v", cfg.TokenLimits)
 
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed to start: %v", err)
